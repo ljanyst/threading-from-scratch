@@ -36,6 +36,7 @@ typedef struct
 //------------------------------------------------------------------------------
 typedef struct tbthread
 {
+  struct tbthread *self;
   void *stack;
   uint32_t stack_size;
   void *(*fn)(void *);
@@ -43,11 +44,16 @@ typedef struct tbthread
 } *tbthread_t;
 
 //------------------------------------------------------------------------------
-// Function prototypes, look in the c files for descriptions
+// General threading
 //------------------------------------------------------------------------------
 void tbthread_attr_init(tbthread_attr_t *attr);
 int tbthread_create(tbthread_t *thread, const tbthread_attr_t *attrs,
   void *(*f)(void *), void *arg);
+
+//------------------------------------------------------------------------------
+// TLS
+//------------------------------------------------------------------------------
+tbthread_t tbthread_self();
 
 //------------------------------------------------------------------------------
 // Utility functions

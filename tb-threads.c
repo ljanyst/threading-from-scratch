@@ -93,6 +93,7 @@ int tbthread_create(
   //----------------------------------------------------------------------------
   *thread = malloc(sizeof(struct tbthread));
   memset(*thread, 0, sizeof(struct tbthread));
+  (*thread)->self = *thread;
   (*thread)->stack = stack;
   (*thread)->stack_size = attr->stack_size;
   (*thread)->fn = f;
@@ -102,8 +103,9 @@ int tbthread_create(
   // Spawn the thread
   //----------------------------------------------------------------------------
   int flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SYSVSEM | CLONE_SIGHAND;
-  flags |= CLONE_THREAD;
-  int tid = tbclone(start_thread, *thread, flags, stack+attr->stack_size);
+  flags |= CLONE_THREAD | CLONE_SETTLS;
+  int tid = tbclone(start_thread, *thread, flags, stack+attr->stack_size,
+                    0, 0, *thread);
   if(tid < 0) {
     tbmunmap(stack, attr->stack_size);
     free(*thread);
