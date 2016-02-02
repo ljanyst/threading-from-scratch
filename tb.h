@@ -24,6 +24,11 @@
 #include <asm-generic/errno.h>
 
 //------------------------------------------------------------------------------
+// Constants
+//------------------------------------------------------------------------------
+#define TBTHREAD_MAX_KEYS 1024
+
+//------------------------------------------------------------------------------
 // Thread attirbutes
 //------------------------------------------------------------------------------
 typedef struct
@@ -41,6 +46,11 @@ typedef struct tbthread
   uint32_t stack_size;
   void *(*fn)(void *);
   void *arg;
+  struct
+  {
+    uint64_t seq;
+    void *data;
+  } tls[TBTHREAD_MAX_KEYS];
 } *tbthread_t;
 
 //------------------------------------------------------------------------------
@@ -53,7 +63,12 @@ int tbthread_create(tbthread_t *thread, const tbthread_attr_t *attrs,
 //------------------------------------------------------------------------------
 // TLS
 //------------------------------------------------------------------------------
+typedef uint16_t tbthread_key_t;
 tbthread_t tbthread_self();
+int tbthread_key_create(tbthread_key_t *key, void (*destructor)(void *));
+int tbthread_key_delete(tbthread_key_t key);
+void *tbthread_getspecific(tbthread_key_t key);
+int tbthread_setspecific(tbthread_key_t kay, void *value);
 
 //------------------------------------------------------------------------------
 // Utility functions

@@ -19,6 +19,32 @@
 
 #include <tb.h>
 #include <string.h>
+#include <stdlib.h>
+
+//------------------------------------------------------------------------------
+// TLS keys
+//------------------------------------------------------------------------------
+tbthread_key_t key1;
+tbthread_key_t key2;
+tbthread_key_t key3;
+
+//------------------------------------------------------------------------------
+// TLS destructors
+//------------------------------------------------------------------------------
+void dest1(void *data)
+{
+  tbprint("[thread 0x%llx] Error: calling dest1\n", tbthread_self());
+}
+
+void dest2(void *data)
+{
+  tbprint("[thread 0x%llx] Error: calling dest2\n", tbthread_self());
+}
+
+void dest3(void *data)
+{
+  tbprint("[thread 0x%llx] Calling dest3\n", tbthread_self());
+}
 
 //------------------------------------------------------------------------------
 // Thread function
@@ -27,9 +53,32 @@ void *thread_func(void *arg)
 {
   int num = *(int*)arg;
   int i;
+  tbthread_t self = tbthread_self();
+  tbprint("[thread 0x%llx] Hello from thread #%d\n", self, num);
+  tbprint("[thread 0x%llx] Allocating the TLS data\n", self);
+  void *data1 = malloc(20);
+  void *data2 = malloc(20);
+  void *data3 = malloc(20);
+  tbthread_setspecific(key1, data1);
+  tbthread_setspecific(key2, data2);
+  tbthread_setspecific(key3, data3);
 
-  tbprint("Hello from thread #%d, ptr: 0x%llx\n", num, tbthread_self());
-
+  tbprint("[thread 0x%llx] Sleeping 3 seconds\n", self);
+  tbsleep(3);
+  void *data1r = tbthread_getspecific(key1);
+  void *data2r = tbthread_getspecific(key2);
+  void *data3r = tbthread_getspecific(key3);
+  if(data1r != data1)
+    tbprint("[thread 0x%llx] Error: datar != data\n", self);
+  if(data2r != 0)
+    tbprint("[thread 0x%llx] Error: data2r != 0\n", self);
+  if(data3r != data3)
+    tbprint("[thread 0x%llx] Error: data3r != data3\n", self);
+  free(data2);
+  free(data1);
+  tbthread_setspecific(key1, 0);
+  tbprint("[thread 0x%llx] Sleeping 1 second\n", self);
+  tbsleep(1);
   return 0;
 }
 
@@ -43,6 +92,22 @@ int main(int argc, char **argv)
   tbthread_attr_t  attr;
   void            *ret;
   int              st;
+
+  //----------------------------------------------------------------------------
+  // Allocate the keys
+  //----------------------------------------------------------------------------
+  tbthread_key_create(&key1, dest1);
+  tbthread_key_create(&key2, dest2);
+  tbthread_key_create(&key3, dest3);
+  tbthread_key_delete(key1);
+  tbthread_key_delete(key3);
+  tbthread_key_create(&key3, dest3);
+  tbthread_key_create(&key1, dest1);
+  tbprint("[thread main] TLS keys: %u, %u, %u\n", key1, key2, key3);
+
+  //----------------------------------------------------------------------------
+  // Spawn the threads
+  //----------------------------------------------------------------------------
   tbthread_attr_init(&attr);
   for(int i = 0; i < 5; ++i) {
     targ[i] = i;
@@ -53,9 +118,13 @@ int main(int argc, char **argv)
     }
   }
 
-  tbprint("Threads spawned successfully\n");
-
-  tbsleep(3);
+  tbprint("[thread main] Threads spawned successfully\n");
+  tbprint("[thread main] Sleeping 1 second\n");
+  tbsleep(1);
+  tbprint("[thread main] Destroying key2\n");
+  tbthread_key_delete(key2);
+  tbprint("[thread main] Sleeping 10 seconds\n");
+  tbsleep(10);
 
   return 0;
 };

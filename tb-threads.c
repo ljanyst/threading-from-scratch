@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "tb.h"
+#include "tb-private.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -44,6 +45,7 @@ static int start_thread(void *arg)
   uint32_t stack_size = th->stack_size;
   void *stack = th->stack;
   th->fn(th->arg);
+  tb_tls_call_destructors();
   free(th);
 
   //----------------------------------------------------------------------------
