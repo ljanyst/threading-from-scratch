@@ -27,6 +27,10 @@
 // Constants
 //------------------------------------------------------------------------------
 #define TBTHREAD_MAX_KEYS 1024
+#define TBTHREAD_MUTEX_NORMAL 0
+#define TBTHREAD_MUTEX_ERRORCHECK 1
+#define TBTHREAD_MUTEX_RECURSIVE 2
+#define TBTHREAD_MUTEX_DEFAULT 0
 
 //------------------------------------------------------------------------------
 // Thread attirbutes
@@ -54,6 +58,27 @@ typedef struct tbthread
 } *tbthread_t;
 
 //------------------------------------------------------------------------------
+// Mutex attributes
+//------------------------------------------------------------------------------
+typedef struct
+{
+  uint8_t type;
+} tbthread_mutexattr_t;
+
+//------------------------------------------------------------------------------
+// Mutex
+//------------------------------------------------------------------------------
+typedef struct
+{
+  int        futex;
+  uint8_t    type;
+  tbthread_t owner;
+  uint64_t   counter;
+} tbthread_mutex_t;
+
+#define TBTHREAD_MUTEX_INITIALIZER {0, 0, 0, 0}
+
+//------------------------------------------------------------------------------
 // General threading
 //------------------------------------------------------------------------------
 void tbthread_attr_init(tbthread_attr_t *attr);
@@ -69,6 +94,21 @@ int tbthread_key_create(tbthread_key_t *key, void (*destructor)(void *));
 int tbthread_key_delete(tbthread_key_t key);
 void *tbthread_getspecific(tbthread_key_t key);
 int tbthread_setspecific(tbthread_key_t kay, void *value);
+
+//------------------------------------------------------------------------------
+// Mutexes
+//------------------------------------------------------------------------------
+int tbthread_mutexattr_init(tbthread_mutexattr_t *attr);
+int tbthread_mutexattr_destroy(tbthread_mutexattr_t *attr);
+int tbthread_mutexattr_gettype(const tbthread_mutexattr_t *attr, int *type);
+int tbthread_mutexattr_settype(tbthread_mutexattr_t *attr, int type);
+
+int tbthread_mutex_init(tbthread_mutex_t *mutex,
+  const tbthread_mutexattr_t *attr);
+int tbthread_mutex_destroy(tbthread_mutex_t *mutex);
+int tbthread_mutex_lock(tbthread_mutex_t *mutex);
+int tbthread_mutex_trylock(tbthread_mutex_t *mutex);
+int tbthread_mutex_unlock(tbthread_mutex_t *mutex);
 
 //------------------------------------------------------------------------------
 // Utility functions

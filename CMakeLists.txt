@@ -12,13 +12,18 @@ add_library(
   tb-utils.c
   tb-threads.c
   tb-tls.c
+  tb-mutexes.c
   tb-clone.S)
 
-add_executable(test-00 test-00.c)
-target_link_libraries(test-00 tb)
+macro(add_test name)
+  add_executable(${name} ${name}.c)
+  target_link_libraries(${name} tb)
+endmacro()
 
-add_executable(test-01 test-01.c)
-target_link_libraries(test-01 tb)
-
-add_executable(test-02 test-02.c)
-target_link_libraries(test-02 tb)
+foreach(i RANGE 3)
+  if(i LESS 10)
+    add_test(test-0${i})
+  else()
+    add_test(test-${i})
+  endif()
+endforeach()
