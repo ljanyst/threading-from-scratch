@@ -166,3 +166,19 @@ uint32_t tbrandom(uint32_t *seed);
   SYSCALL(name, a1, a2, a3, a4, a5, 0)
 #define SYSCALL6(name, a1, a2, a3, a4, a5, a6) \
   SYSCALL(name, a1, a2, a3, a4, a5, a6)
+
+//------------------------------------------------------------------------------
+// List
+//------------------------------------------------------------------------------
+typedef struct list {
+  struct list *next;
+  struct list *prev;
+  void        *element;
+} list_t;
+
+int list_add_elem(list_t *list, void *element);
+void list_add(list_t *list, list_t *node);
+void list_rm(list_t *node);
+list_t *list_find_elem(list_t *list, void *element);
+void list_for_each_elem(list_t *list, void (*func)(void *));
+void list_clear(list_t *list);

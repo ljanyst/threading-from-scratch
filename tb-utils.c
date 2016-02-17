@@ -393,3 +393,70 @@ void tb_heap_state(uint64_t *total, uint64_t *allocated)
     cursor = cursor->next;
   }
 }
+
+//------------------------------------------------------------------------------
+// Add an element
+//------------------------------------------------------------------------------
+int list_add_elem(list_t *list, void *element)
+{
+  list_t *node = malloc(sizeof(list_t));
+  if(!node)
+    return -ENOMEM;
+  node->element = element;
+  list_add(list, node);
+  return 0;
+};
+
+//------------------------------------------------------------------------------
+// Add a node
+//------------------------------------------------------------------------------
+void list_add(list_t *list, list_t *node)
+{
+  list_t *cursor = list;
+  for(; cursor->next; cursor = cursor->next);
+  cursor->next = node;
+  node->prev = cursor;
+  node->next = 0;
+}
+
+//------------------------------------------------------------------------------
+// Remove a node
+//------------------------------------------------------------------------------
+void list_rm(list_t *node)
+{
+  node->prev->next = node->next;
+  if(node->next)
+    node->next->prev = node->prev;
+}
+
+//------------------------------------------------------------------------------
+// Find an element
+//------------------------------------------------------------------------------
+list_t *list_find_elem(list_t *list, void *element)
+{
+  list_t *cursor = list;
+  for(; cursor->next && cursor->next->element != element;
+        cursor = cursor->next);
+  return cursor->next;
+}
+
+//------------------------------------------------------------------------------
+// Invoke a function for each element
+//------------------------------------------------------------------------------
+void list_for_each_elem(list_t *list, void (*func)(void *))
+{
+  for(list_t *cursor = list->next; cursor; cursor = cursor->next)
+    func(cursor->element);
+}
+
+//------------------------------------------------------------------------------
+// Delete all the nodes
+//------------------------------------------------------------------------------
+void list_clear(list_t *list)
+{
+  while(list->next) {
+    list_t *node = list->next;
+    list->next = list->next->next;
+    free(node);
+  }
+}
