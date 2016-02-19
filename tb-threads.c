@@ -28,11 +28,35 @@
 #include <asm-generic/mman-common.h>
 #include <asm-generic/param.h>
 #include <linux/futex.h>
+#include <asm/prctl.h>
 
 //------------------------------------------------------------------------------
 // Prototypes
 //------------------------------------------------------------------------------
 static void release_descriptor(tbthread_t desc);
+static struct tbthread *get_descriptor();
+
+//------------------------------------------------------------------------------
+// Initialize threading
+//------------------------------------------------------------------------------
+static void *glibc_thread_desc;
+void tbthread_init()
+{
+  glibc_thread_desc = tbthread_self();
+  tbthread_t thread = malloc(sizeof(struct tbthread));
+  memset(thread, 0, sizeof(struct tbthread));
+  thread->self = thread;
+  SYSCALL2(__NR_arch_prctl, ARCH_SET_FS, thread);
+}
+
+//------------------------------------------------------------------------------
+// Finalize threading
+//------------------------------------------------------------------------------
+void tbthread_finit()
+{
+  free(tbthread_self());
+  SYSCALL2(__NR_arch_prctl, ARCH_SET_FS, glibc_thread_desc);
+}
 
 //------------------------------------------------------------------------------
 // Init the attrs to the defaults

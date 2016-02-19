@@ -83,6 +83,8 @@ typedef struct
 //------------------------------------------------------------------------------
 // General threading
 //------------------------------------------------------------------------------
+void tbthread_init();
+void tbthread_finit();
 void tbthread_attr_init(tbthread_attr_t *attr);
 int tbthread_create(tbthread_t *thread, const tbthread_attr_t *attrs,
   void *(*f)(void *), void *arg);
