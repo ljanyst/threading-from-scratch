@@ -19,4 +19,13 @@
 
 #pragma once
 
+// the thread is detached
+#define TB_DETACHED TBTHREAD_CREATE_DETACHED
+
+// the thread is joinable
+#define TB_JOINABLE TBTHREAD_CREATE_JOINABLE
+
+// the thread is joinable and its status cannot be changed anymore
+#define TB_JOINABLE_FIXED 2
+
 void tb_tls_call_destructors();

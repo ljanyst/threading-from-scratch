@@ -31,10 +31,11 @@
 #include <asm/prctl.h>
 
 //------------------------------------------------------------------------------
-// Prototypes
+// Prototypes and globals
 //------------------------------------------------------------------------------
 static void release_descriptor(tbthread_t desc);
 static struct tbthread *get_descriptor();
+static tbthread_mutex_t desc_mutex = TBTHREAD_MUTEX_INITIALIZER;
 
 //------------------------------------------------------------------------------
 // Initialize threading
@@ -64,6 +65,15 @@ void tbthread_finit()
 void tbthread_attr_init(tbthread_attr_t *attr)
 {
   attr->stack_size = 8192 * 1024;
+  attr->joinable   = 1;
+}
+
+int tbthread_attr_setdetachstate(tbthread_attr_t *attr, int state)
+{
+  if(state == TBTHREAD_CREATE_DETACHED)
+    attr->joinable = 0;
+  else
+    attr->joinable = 1;
 }
 
 //------------------------------------------------------------------------------
@@ -72,11 +82,31 @@ void tbthread_attr_init(tbthread_attr_t *attr)
 static int start_thread(void *arg)
 {
   tbthread_t th = (tbthread_t)arg;
+  tbthread_exit(th->fn(th->arg));
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+// Terminate the current thread
+//------------------------------------------------------------------------------
+void tbthread_exit(void *retval)
+{
+  tbthread_t th = tbthread_self();
   uint32_t stack_size = th->stack_size;
   void *stack = th->stack;
-  th->fn(th->arg);
+  int free_desc = 0;
+
+  th->retval = retval;
   tb_tls_call_destructors();
-  release_descriptor(th);
+
+  tbthread_mutex_lock(&desc_mutex);
+  if(th->join_status == TB_DETACHED)
+    free_desc = 1;
+  th->join_status = TB_JOINABLE_FIXED;
+  tbthread_mutex_unlock(&desc_mutex);
+
+  if(free_desc)
+    release_descriptor(th);
 
   //----------------------------------------------------------------------------
   // Free the stack and exit. We do it this way because we remove the stack from
@@ -92,7 +122,6 @@ static int start_thread(void *arg)
     :
     : "a" (__NR_munmap), "r" (a1), "r" (a2)
     : "memory", "cc", "r11", "cx");
-  return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -113,7 +142,6 @@ static void wait_for_thread(tbthread_t thread)
 //------------------------------------------------------------------------------
 static list_t used_desc;
 static list_t free_desc;
-static tbthread_mutex_t desc_mutex = TBTHREAD_MUTEX_INITIALIZER;
 
 //------------------------------------------------------------------------------
 // Get a descriptor
@@ -205,9 +233,9 @@ int tbthread_create(
   (*thread)->self = *thread;
   (*thread)->stack = stack;
   (*thread)->stack_size = attr->stack_size;
-  (*thread)->exit_futex = 0;
   (*thread)->fn = f;
   (*thread)->arg = arg;
+  (*thread)->join_status = attr->joinable;
 
   //----------------------------------------------------------------------------
   // Spawn the thread
@@ -224,5 +252,93 @@ int tbthread_create(
     return tid;
   }
 
+  //----------------------------------------------------------------------------
+  // It may happen that we will start to wait for this futex before the kernel
+  // manages to fill it with something meaningful.
+  //----------------------------------------------------------------------------
+  (*thread)->exit_futex = tid;
+
   return 0;
+}
+
+//------------------------------------------------------------------------------
+// Detach a thread
+//------------------------------------------------------------------------------
+int tbthread_detach(tbthread_t thread)
+{
+  int ret = 0;
+
+  tbthread_mutex_lock(&desc_mutex);
+  if(!list_find_elem(&used_desc, thread)) {
+    ret = -ESRCH;
+    goto exit;
+  }
+
+  if(thread->join_status == TB_JOINABLE_FIXED) {
+    ret = -EINVAL;
+    goto exit;
+  }
+
+  thread->join_status = TB_DETACHED;
+exit:
+  tbthread_mutex_unlock(&desc_mutex);
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// Join a thread
+//------------------------------------------------------------------------------
+int tbthread_join(tbthread_t thread, void **retval)
+{
+  tbthread_t self = tbthread_self();
+  int ret = 0;
+
+  //----------------------------------------------------------------------------
+  // Check if the thread may be joined
+  //----------------------------------------------------------------------------
+  tbthread_mutex_lock(&desc_mutex);
+
+  if(thread == self) {
+    ret = -EDEADLK;
+    goto error;
+  }
+
+  if(!list_find_elem(&used_desc, thread)) {
+    ret = -ESRCH;
+    goto error;
+  }
+
+  if(thread->join_status == TB_DETACHED) {
+    ret = -EINVAL;
+    goto error;
+  }
+
+  if(self->joiner == thread) {
+    ret = -EDEADLK;
+    goto error;
+  }
+
+  if(thread->joiner) {
+    ret = -EINVAL;
+    goto error;
+  }
+
+  thread->join_status = TB_JOINABLE_FIXED;
+  thread->joiner = self;
+
+  //----------------------------------------------------------------------------
+  // We can release the lock now, because we're responsible for releasing the
+  // thread descriptor now, so it's not going to go away.
+  //----------------------------------------------------------------------------
+  tbthread_mutex_unlock(&desc_mutex);
+
+  wait_for_thread(thread);
+  if(retval)
+    *retval = thread->retval;
+  release_descriptor(thread);
+  return 0;
+
+error:
+  tbthread_mutex_unlock(&desc_mutex);
+  return ret;
 }

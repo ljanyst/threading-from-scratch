@@ -31,6 +31,8 @@
 #define TBTHREAD_MUTEX_ERRORCHECK 1
 #define TBTHREAD_MUTEX_RECURSIVE 2
 #define TBTHREAD_MUTEX_DEFAULT 0
+#define TBTHREAD_CREATE_DETACHED 0
+#define TBTHREAD_CREATE_JOINABLE 1
 
 //------------------------------------------------------------------------------
 // Thread attirbutes
@@ -38,6 +40,7 @@
 typedef struct
 {
   uint32_t  stack_size;
+  uint8_t   joinable;
 } tbthread_attr_t;
 
 //------------------------------------------------------------------------------
@@ -57,6 +60,8 @@ typedef struct tbthread
     uint64_t seq;
     void *data;
   } tls[TBTHREAD_MAX_KEYS];
+  uint8_t join_status;
+  struct tbthread *joiner;
 } *tbthread_t;
 
 //------------------------------------------------------------------------------
@@ -86,8 +91,12 @@ typedef struct
 void tbthread_init();
 void tbthread_finit();
 void tbthread_attr_init(tbthread_attr_t *attr);
+int tbthread_attr_setdetachstate(tbthread_attr_t *attr, int state);
 int tbthread_create(tbthread_t *thread, const tbthread_attr_t *attrs,
   void *(*f)(void *), void *arg);
+void tbthread_exit(void *retval);
+int tbthread_detach(tbthread_t thread);
+int tbthread_join(tbthread_t thread, void **retval);
 
 //------------------------------------------------------------------------------
 // TLS
