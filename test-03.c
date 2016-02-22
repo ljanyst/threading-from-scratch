@@ -144,6 +144,7 @@ int main(int argc, char **argv)
       tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
       return 1;
     }
+    tbthread_detach(thread[i]);
   }
 
   tbprint("[thread main] Threads spawned successfully\n");
@@ -163,6 +164,7 @@ int main(int argc, char **argv)
       tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
       return 1;
     }
+    tbthread_detach(thread[i]);
   }
 
   tbprint("[thread main] Threads spawned successfully\n");
@@ -182,6 +184,7 @@ int main(int argc, char **argv)
       tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
       return 1;
     }
+    tbthread_detach(thread[i]);
   }
 
   tbprint("[thread main] Threads spawned successfully\n");

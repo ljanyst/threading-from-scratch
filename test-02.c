@@ -44,6 +44,7 @@ void dest2(void *data)
 void dest3(void *data)
 {
   tbprint("[thread 0x%llx] Calling dest3\n", tbthread_self());
+  free(data);
 }
 
 //------------------------------------------------------------------------------
@@ -116,6 +117,7 @@ int main(int argc, char **argv)
       tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
       return 1;
     }
+    tbthread_detach(thread[i]);
   }
 
   tbprint("[thread main] Threads spawned successfully\n");

@@ -53,6 +53,7 @@ int main(int argc, char **argv)
       tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
       return 1;
     }
+    tbthread_detach(thread[i]);
   }
 
   tbprint("Threads spawned successfully\n");
