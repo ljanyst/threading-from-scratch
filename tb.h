@@ -86,6 +86,13 @@ typedef struct
 #define TBTHREAD_MUTEX_INITIALIZER {0, 0, 0, 0}
 
 //------------------------------------------------------------------------------
+// Once
+//------------------------------------------------------------------------------
+typedef int tbthread_once_t;
+
+#define TBTHREAD_ONCE_INIT 0
+
+//------------------------------------------------------------------------------
 // General threading
 //------------------------------------------------------------------------------
 void tbthread_init();
@@ -98,6 +105,7 @@ void tbthread_exit(void *retval);
 int tbthread_detach(tbthread_t thread);
 int tbthread_join(tbthread_t thread, void **retval);
 int tbthread_equal(tbthread_t t1, tbthread_t t2);
+int tbthread_once(tbthread_once_t *once, void (*func)(void));
 
 //------------------------------------------------------------------------------
 // TLS

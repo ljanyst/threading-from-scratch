@@ -28,4 +28,8 @@
 // the thread is joinable and its status cannot be changed anymore
 #define TB_JOINABLE_FIXED 2
 
+#define TB_ONCE_NEW 0
+#define TB_ONCE_IN_PROGRESS 1
+#define TB_ONCE_DONE 2
+
 void tb_tls_call_destructors();

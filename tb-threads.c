@@ -20,6 +20,7 @@
 #include "tb.h"
 #include "tb-private.h"
 
+#include <limits.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
@@ -349,4 +350,27 @@ error:
 int tbthread_equal(tbthread_t t1, tbthread_t t2)
 {
   return t1 == t2;
+}
+
+//------------------------------------------------------------------------------
+// Run the code once
+//------------------------------------------------------------------------------
+int tbthread_once(tbthread_once_t *once, void (*func)(void))
+{
+  if(!once || !func)
+    return -EINVAL;
+
+  if(*once == TB_ONCE_DONE)
+    return 0;
+
+  if(__sync_bool_compare_and_swap(once, TB_ONCE_NEW, TB_ONCE_IN_PROGRESS)) {
+    (*func)();
+    *once = TB_ONCE_DONE;
+    SYSCALL3(__NR_futex, once, FUTEX_WAKE, INT_MAX);
+    return 0;
+  }
+
+  while(*once != TB_ONCE_DONE)
+    SYSCALL3(__NR_futex, once, FUTEX_WAIT, TB_ONCE_IN_PROGRESS);
+  return 0;
 }
