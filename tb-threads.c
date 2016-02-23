@@ -342,3 +342,11 @@ error:
   tbthread_mutex_unlock(&desc_mutex);
   return ret;
 }
+
+//------------------------------------------------------------------------------
+// Thread equal
+//------------------------------------------------------------------------------
+int tbthread_equal(tbthread_t t1, tbthread_t t2)
+{
+  return t1 == t2;
+}

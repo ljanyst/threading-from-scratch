@@ -97,6 +97,7 @@ int tbthread_create(tbthread_t *thread, const tbthread_attr_t *attrs,
 void tbthread_exit(void *retval);
 int tbthread_detach(tbthread_t thread);
 int tbthread_join(tbthread_t thread, void **retval);
+int tbthread_equal(tbthread_t t1, tbthread_t t2);
 
 //------------------------------------------------------------------------------
 // TLS
