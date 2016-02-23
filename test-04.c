@@ -85,7 +85,7 @@ int main(int argc, char **argv)
     targ[i] = i;
     st = tbthread_create(&thread[i], &attr, thread_func, &targ[i]);
     if(st != 0) {
-      tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
+      tbprint("Failed to spawn thread %d: %s\n", i, tbstrerror(-st));
       return 1;
     }
   }
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
     void *ret;
     st = tbthread_join(thread[i], &ret);
     if(st != 0) {
-      tbprint("Failed to join thread %d: %s\n", i, strerror(-st));
+      tbprint("Failed to join thread %d: %s\n", i, tbstrerror(-st));
       return 1;
     }
     tbprint("[thread main] Thread %d joined, retval; %d\n", i,  *(int*)ret);
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
     targ[i] = i;
     st = tbthread_create(&thread[i], &attr, thread_func, &targ[i]);
     if(st != 0) {
-      tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
+      tbprint("Failed to spawn thread %d: %s\n", i, tbstrerror(-st));
       return 1;
     }
   }
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
     void *ret;
     st = tbthread_join(thread[i], &ret);
     if(st != 0) {
-      tbprint("Failed to join thread %d: %s\n", i, strerror(-st));
+      tbprint("Failed to join thread %d: %s\n", i, tbstrerror(-st));
       return 1;
     }
     tbprint("Thread %d joined, retval; %d\n", i,  *(int*)ret);
@@ -139,7 +139,7 @@ int main(int argc, char **argv)
     targ[i] = i;
     st = tbthread_create(&thread[i], &attr, thread_func, &targ[i]);
     if(st != 0) {
-      tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
+      tbprint("Failed to spawn thread %d: %s\n", i, tbstrerror(-st));
       return 1;
     }
     tbthread_detach(thread[i]);
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
     targ[i] = i;
     st = tbthread_create(&thread[i], &attr, thread_func, &targ[i]);
     if(st != 0) {
-      tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
+      tbprint("Failed to spawn thread %d: %s\n", i, tbstrerror(-st));
       return 1;
     }
     tbthread_detach(thread[i]);
@@ -207,7 +207,7 @@ int main(int argc, char **argv)
   for(int i = 0; i < 2; ++i) {
     st = tbthread_create(&thread[i], &attr, thread_joiner_func, &jarg[i]);
     if(st != 0) {
-      tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
+      tbprint("Failed to spawn thread %d: %s\n", i, tbstrerror(-st));
       return 1;
     }
   }
@@ -239,7 +239,7 @@ int main(int argc, char **argv)
   for(int i = 0; i < 3; ++i) {
     st = tbthread_create(&thread[i], &attr, thread_joiner_func, &jarg[i]);
     if(st != 0) {
-      tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
+      tbprint("Failed to spawn thread %d: %s\n", i, tbstrerror(-st));
       return 1;
     }
   }
@@ -251,7 +251,7 @@ int main(int argc, char **argv)
   for(int i = 1; i < 3; ++i) {
     st = tbthread_join(thread[i], 0);
     if(st != 0) {
-      tbprint("Failed to join thread %d: %s\n", i, strerror(-st));
+      tbprint("Failed to join thread %d: %s\n", i, tbstrerror(-st));
       return 1;
     }
     tbprint("Thread %d joined\n", i);
