@@ -149,6 +149,7 @@ void *tbbrk(void *addr);
 
 uint64_t tbtime();
 uint32_t tbrandom(uint32_t *seed);
+const char *tbstrerror(int errno);
 
 //------------------------------------------------------------------------------
 // Syscall interface
