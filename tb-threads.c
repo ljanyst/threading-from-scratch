@@ -23,7 +23,6 @@
 #include <limits.h>
 #include <stdint.h>
 #include <string.h>
-#include <stdlib.h>
 #include <linux/sched.h>
 #include <linux/mman.h>
 #include <asm-generic/mman-common.h>
@@ -37,6 +36,7 @@
 static void release_descriptor(tbthread_t desc);
 static struct tbthread *get_descriptor();
 static tbthread_mutex_t desc_mutex = TBTHREAD_MUTEX_INITIALIZER;
+int tb_pid = 0;
 
 //------------------------------------------------------------------------------
 // Initialize threading
@@ -49,6 +49,7 @@ void tbthread_init()
   memset(thread, 0, sizeof(struct tbthread));
   thread->self = thread;
   SYSCALL2(__NR_arch_prctl, ARCH_SET_FS, thread);
+  tb_pid = SYSCALL0(__NR_getpid);
 }
 
 //------------------------------------------------------------------------------

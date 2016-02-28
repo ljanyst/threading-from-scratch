@@ -33,3 +33,5 @@
 #define TB_ONCE_DONE 2
 
 void tb_tls_call_destructors();
+
+extern int tb_pid;
