@@ -186,6 +186,8 @@ int tbsigaction(int signum, struct sigaction *act, struct sigaction *old);
       : "memory", "cc", "r11", "cx");                   \
     (long) result; })
 
+#define SYSCALL0(name) \
+  SYSCALL(name, 0, 0, 0, 0, 0, 0)
 #define SYSCALL1(name, a1) \
   SYSCALL(name, a1, 0, 0, 0, 0, 0)
 #define SYSCALL2(name, a1, a2) \
