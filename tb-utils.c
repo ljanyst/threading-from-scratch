@@ -598,3 +598,16 @@ const char *tbstrerror(int errno)
   for(; errors[i].errno && errors[i].errno != errno; ++i);
   return errors[i].msg;
 }
+
+//------------------------------------------------------------------------------
+// Sigaction
+//------------------------------------------------------------------------------
+void __restore_rt();
+#define SA_RESTORER 0x04000000
+
+int tbsigaction(int signum, struct sigaction *act, struct sigaction *old)
+{
+  act->sa_flags |= SA_RESTORER;
+  act->sa_restorer = __restore_rt;
+  return SYSCALL4(__NR_rt_sigaction, signum, act, old, sizeof(sigset_t));
+}

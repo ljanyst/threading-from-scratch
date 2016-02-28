@@ -22,6 +22,9 @@
 #include <stdint.h>
 #include <asm/unistd_64.h>
 #include <asm-generic/errno.h>
+#include <stddef.h>
+#include <asm/signal.h>
+#include <asm-generic/siginfo.h>
 
 //------------------------------------------------------------------------------
 // Constants
@@ -154,6 +157,8 @@ void *tbbrk(void *addr);
 uint64_t tbtime();
 uint32_t tbrandom(uint32_t *seed);
 const char *tbstrerror(int errno);
+
+int tbsigaction(int signum, struct sigaction *act, struct sigaction *old);
 
 //------------------------------------------------------------------------------
 // Syscall interface

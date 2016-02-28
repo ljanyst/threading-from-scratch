@@ -13,7 +13,8 @@ add_library(
   tb-threads.c
   tb-tls.c
   tb-mutexes.c
-  tb-clone.S)
+  tb-clone.S
+  tb-signal-trampoline.S)
 
 macro(add_test name)
   add_executable(${name} ${name}.c)
