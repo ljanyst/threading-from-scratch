@@ -135,6 +135,10 @@ int tbthread_mutex_unlock(tbthread_mutex_t *mutex);
 //------------------------------------------------------------------------------
 // Utility functions
 //------------------------------------------------------------------------------
+void *malloc(size_t size);
+void free(void *ptr);
+void *realloc(void *ptr, size_t size);
+void *calloc(size_t nmemb, size_t size);
 void tbprint(const char *format, ...);
 int tbwrite(int fd, const char *buffer, unsigned long len);
 void tbsleep(int secs);
