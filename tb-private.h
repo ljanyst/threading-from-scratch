@@ -41,6 +41,8 @@
 
 void tb_tls_call_destructors();
 void tb_cancel_handler(int sig, siginfo_t *si, void *ctx);
+void tb_call_cleanup_handlers();
+void tb_clear_cleanup_handlers();
 
 extern tbthread_mutex_t desc_mutex;
 extern list_t used_desc;

@@ -67,6 +67,81 @@ exit:
 }
 
 //------------------------------------------------------------------------------
+// Cleanup list element
+//------------------------------------------------------------------------------
+struct cleanup_elem {
+  void (*func)(void *);
+  void *arg;
+};
+
+//------------------------------------------------------------------------------
+// Release a cleanup handler
+//------------------------------------------------------------------------------
+static void release_cleanup_handler(void *element)
+{
+  free(element);
+}
+
+//------------------------------------------------------------------------------
+// Call a cleanup handler
+//------------------------------------------------------------------------------
+static void call_cleanup_handler(void *element)
+{
+  struct cleanup_elem *e = (struct cleanup_elem *)element;
+  (*e->func)(e->arg);
+}
+
+//------------------------------------------------------------------------------
+// Clear the cleanup handlers
+//------------------------------------------------------------------------------
+void tb_clear_cleanup_handlers()
+{
+  tbthread_t self = tbthread_self();
+  list_for_each_elem(&self->cleanup_handlers, release_cleanup_handler);
+  list_clear(&self->cleanup_handlers);
+}
+
+//------------------------------------------------------------------------------
+// Call the cleanup handlers
+//------------------------------------------------------------------------------
+void tb_call_cleanup_handlers()
+{
+  tbthread_t self = tbthread_self();
+  list_for_each_elem(&self->cleanup_handlers, call_cleanup_handler);
+  list_for_each_elem(&self->cleanup_handlers, release_cleanup_handler);
+  list_clear(&self->cleanup_handlers);
+}
+
+//------------------------------------------------------------------------------
+// Install a cleanup handler
+//------------------------------------------------------------------------------
+void tbthread_cleanup_push(void (*func)(void *), void *arg)
+{
+  tbthread_t self = tbthread_self();
+  struct cleanup_elem *e = malloc(sizeof(struct cleanup_elem));
+  e->func = func;
+  e->arg = arg;
+  list_add_elem(&self->cleanup_handlers, e, 1);
+}
+
+//------------------------------------------------------------------------------
+// Remove a cleanup handler
+//------------------------------------------------------------------------------
+void tbthread_cleanup_pop(int execute)
+{
+  tbthread_t self = tbthread_self();
+  list_t *node = self->cleanup_handlers.next;
+  if(!node)
+    return;
+  list_rm(node);
+  struct cleanup_elem *e = (struct cleanup_elem*)node->element;
+  if(execute)
+    (*e->func)(e->arg);
+  free(e);
+  free(node);
+}
+
+//------------------------------------------------------------------------------
 // Set the cancelation bit
 //------------------------------------------------------------------------------
 static int set_cancelation_bit(int bitmask, int value)

@@ -90,7 +90,10 @@ int tbthread_attr_setdetachstate(tbthread_attr_t *attr, int state)
 static int start_thread(void *arg)
 {
   tbthread_t th = (tbthread_t)arg;
-  tbthread_exit(th->fn(th->arg));
+  void *ret = th->fn(th->arg);
+  tbthread_setcancelstate(TBTHREAD_CANCEL_DISABLE, 0);
+  tb_clear_cleanup_handlers();
+  tbthread_exit(ret);
   return 0;
 }
 
@@ -104,9 +107,8 @@ void tbthread_exit(void *retval)
   void *stack = th->stack;
   int free_desc = 0;
 
-  tbthread_setcancelstate(TBTHREAD_CANCEL_DISABLE, 0);
-
   th->retval = retval;
+  tb_call_cleanup_handlers();
   tb_tls_call_destructors();
 
   tbthread_mutex_lock(&desc_mutex);

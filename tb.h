@@ -81,6 +81,7 @@ typedef struct tbthread
   uint8_t join_status;
   uint8_t cancel_status;
   struct tbthread *joiner;
+  list_t cleanup_handlers;
 } *tbthread_t;
 
 //------------------------------------------------------------------------------
@@ -126,6 +127,8 @@ int tbthread_join(tbthread_t thread, void **retval);
 int tbthread_equal(tbthread_t t1, tbthread_t t2);
 int tbthread_once(tbthread_once_t *once, void (*func)(void));
 int tbthread_cancel(tbthread_t thread);
+void tbthread_cleanup_push(void (*func)(void *), void *arg);
+void tbthread_cleanup_pop(int execute);
 int tbthread_setcancelstate(int state, int *oldstate);
 int tbthread_setcanceltype(int type, int *oldtype);
 void tbthread_testcancel();
