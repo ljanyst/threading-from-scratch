@@ -36,6 +36,12 @@
 #define TBTHREAD_MUTEX_DEFAULT 0
 #define TBTHREAD_CREATE_DETACHED 0
 #define TBTHREAD_CREATE_JOINABLE 1
+#define TBTHREAD_CANCEL_ENABLE 1
+#define TBTHREAD_CANCEL_DISABLE 0
+#define TBTHREAD_CANCEL_DEFERRED 1
+#define TBTHREAD_CANCEL_ASYNCHRONOUS 0
+
+#define TBTHREAD_CANCELED ((void*)-1)
 
 //------------------------------------------------------------------------------
 // Thread attirbutes
@@ -64,6 +70,7 @@ typedef struct tbthread
     void *data;
   } tls[TBTHREAD_MAX_KEYS];
   uint8_t join_status;
+  uint8_t cancel_status;
   struct tbthread *joiner;
 } *tbthread_t;
 
@@ -109,6 +116,10 @@ int tbthread_detach(tbthread_t thread);
 int tbthread_join(tbthread_t thread, void **retval);
 int tbthread_equal(tbthread_t t1, tbthread_t t2);
 int tbthread_once(tbthread_once_t *once, void (*func)(void));
+int tbthread_cancel(tbthread_t thread);
+int tbthread_setcancelstate(int state, int *oldstate);
+int tbthread_setcanceltype(int type, int *oldtype);
+void tbthread_testcancel();
 
 //------------------------------------------------------------------------------
 // TLS

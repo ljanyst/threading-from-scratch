@@ -32,6 +32,16 @@
 #define TB_ONCE_IN_PROGRESS 1
 #define TB_ONCE_DONE 2
 
-void tb_tls_call_destructors();
+#define TB_CANCEL_ENABLED  0x01
+#define TB_CANCEL_DEFERRED 0x02
+#define TB_CANCELING       0x04
+#define TB_CANCELED        0x08
 
+#define SIGCANCEL SIGRTMIN
+
+void tb_tls_call_destructors();
+void tb_cancel_handler(int sig, siginfo_t *si, void *ctx);
+
+extern tbthread_mutex_t desc_mutex;
+extern list_t used_desc;
 extern int tb_pid;

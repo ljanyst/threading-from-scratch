@@ -35,7 +35,7 @@
 //------------------------------------------------------------------------------
 static void release_descriptor(tbthread_t desc);
 static struct tbthread *get_descriptor();
-static tbthread_mutex_t desc_mutex = TBTHREAD_MUTEX_INITIALIZER;
+tbthread_mutex_t desc_mutex = TBTHREAD_MUTEX_INITIALIZER;
 int tb_pid = 0;
 
 //------------------------------------------------------------------------------
@@ -50,6 +50,12 @@ void tbthread_init()
   thread->self = thread;
   SYSCALL2(__NR_arch_prctl, ARCH_SET_FS, thread);
   tb_pid = SYSCALL0(__NR_getpid);
+
+  struct sigaction sa;
+  memset(&sa, 0, sizeof(struct sigaction));
+  sa.sa_handler = (__sighandler_t)tb_cancel_handler;
+  sa.sa_flags = SA_SIGINFO;
+  tbsigaction(SIGCANCEL, &sa, 0);
 }
 
 //------------------------------------------------------------------------------
@@ -98,6 +104,8 @@ void tbthread_exit(void *retval)
   void *stack = th->stack;
   int free_desc = 0;
 
+  tbthread_setcancelstate(TBTHREAD_CANCEL_DISABLE, 0);
+
   th->retval = retval;
   tb_tls_call_destructors();
 
@@ -142,7 +150,7 @@ static void wait_for_thread(tbthread_t thread)
 //------------------------------------------------------------------------------
 // Descriptor lists
 //------------------------------------------------------------------------------
-static list_t used_desc;
+list_t used_desc;
 static list_t free_desc;
 
 //------------------------------------------------------------------------------
@@ -238,6 +246,7 @@ int tbthread_create(
   (*thread)->fn = f;
   (*thread)->arg = arg;
   (*thread)->join_status = attr->joinable;
+  (*thread)->cancel_status = TB_CANCEL_ENABLED | TB_CANCEL_DEFERRED;
 
   //----------------------------------------------------------------------------
   // Spawn the thread

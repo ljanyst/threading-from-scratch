@@ -13,6 +13,7 @@ add_library(
   tb-threads.c
   tb-tls.c
   tb-mutexes.c
+  tb-cancel.c
   tb-clone.S
   tb-signal-trampoline.S)
 
