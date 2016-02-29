@@ -24,6 +24,24 @@
 #define CANCEL_ASYNC 2
 
 //------------------------------------------------------------------------------
+// Cleanup handlers
+//------------------------------------------------------------------------------
+void cleanup1(void *arg)
+{
+  tbprint("[thread 0x%llx] Cleanup handler 1\n", arg);
+}
+
+void cleanup2(void *arg)
+{
+  tbprint("[thread 0x%llx] Cleanup handler 2\n", arg);
+}
+
+void cleanup3(void *arg)
+{
+  tbprint("[thread 0x%llx] Cleanup handler 3\n", arg);
+}
+
+//------------------------------------------------------------------------------
 // Thread function
 //------------------------------------------------------------------------------
 void *thread_func(void *arg)
@@ -32,6 +50,10 @@ void *thread_func(void *arg)
   int mode = *(int *)arg;
   tbthread_setcancelstate(TBTHREAD_CANCEL_DISABLE, 0);
   tbprint("[thread 0x%llx] Started\n", self);
+
+  tbthread_cleanup_push(cleanup1, self);
+  tbthread_cleanup_push(cleanup2, self);
+  tbthread_cleanup_push(cleanup3, self);
 
   if(mode == CANCEL_ASYNC)
     tbthread_setcanceltype(TBTHREAD_CANCEL_ASYNCHRONOUS, 0);
@@ -47,6 +69,10 @@ void *thread_func(void *arg)
       tbthread_testcancel();
   }
   tbprint("[thread 0x%llx] Not canceled\n", self);
+  tbthread_cleanup_pop(0);
+  tbthread_cleanup_pop(1);
+  tbthread_cleanup_pop(0);
+
   return 0;
 }
 
