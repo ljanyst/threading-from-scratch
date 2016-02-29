@@ -188,7 +188,7 @@ static struct tbthread *get_descriptor()
 
   tbthread_mutex_lock(&desc_mutex);
 
-  list_add(&used_desc, node);
+  list_add(&used_desc, node, 0);
   tbthread_mutex_unlock(&desc_mutex);
   return desc;
 }
@@ -206,7 +206,7 @@ static void release_descriptor(tbthread_t desc)
     // abort!
   }
   list_rm(node);
-  list_add(&free_desc, node);
+  list_add(&free_desc, node, 0);
   tbthread_mutex_unlock(&desc_mutex);
 }
 

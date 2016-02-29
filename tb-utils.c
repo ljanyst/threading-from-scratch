@@ -397,26 +397,29 @@ void tb_heap_state(uint64_t *total, uint64_t *allocated)
 //------------------------------------------------------------------------------
 // Add an element
 //------------------------------------------------------------------------------
-int list_add_elem(list_t *list, void *element)
+int list_add_elem(list_t *list, void *element, int front)
 {
   list_t *node = malloc(sizeof(list_t));
   if(!node)
     return -ENOMEM;
   node->element = element;
-  list_add(list, node);
+  list_add(list, node, front);
   return 0;
 };
 
 //------------------------------------------------------------------------------
 // Add a node
 //------------------------------------------------------------------------------
-void list_add(list_t *list, list_t *node)
+void list_add(list_t *list, list_t *node, int front)
 {
   list_t *cursor = list;
-  for(; cursor->next; cursor = cursor->next);
+  if(!front)
+    for(; cursor->next; cursor = cursor->next);
+  node->next = cursor->next;
   cursor->next = node;
   node->prev = cursor;
-  node->next = 0;
+  if(node->next)
+    node->next->prev = node;
 }
 
 //------------------------------------------------------------------------------

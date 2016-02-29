@@ -44,6 +44,15 @@
 #define TBTHREAD_CANCELED ((void*)-1)
 
 //------------------------------------------------------------------------------
+// List struct
+//------------------------------------------------------------------------------
+typedef struct list {
+  struct list *next;
+  struct list *prev;
+  void        *element;
+} list_t;
+
+//------------------------------------------------------------------------------
 // Thread attirbutes
 //------------------------------------------------------------------------------
 typedef struct
@@ -213,16 +222,10 @@ int tbsigaction(int signum, struct sigaction *act, struct sigaction *old);
   SYSCALL(name, a1, a2, a3, a4, a5, a6)
 
 //------------------------------------------------------------------------------
-// List
+// List ops
 //------------------------------------------------------------------------------
-typedef struct list {
-  struct list *next;
-  struct list *prev;
-  void        *element;
-} list_t;
-
-int list_add_elem(list_t *list, void *element);
-void list_add(list_t *list, list_t *node);
+int list_add_elem(list_t *list, void *element, int front);
+void list_add(list_t *list, list_t *node, int front);
 void list_rm(list_t *node);
 list_t *list_find_elem(list_t *list, void *element);
 void list_for_each_elem(list_t *list, void (*func)(void *));
