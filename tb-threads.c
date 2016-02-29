@@ -365,6 +365,16 @@ int tbthread_equal(tbthread_t t1, tbthread_t t2)
 }
 
 //------------------------------------------------------------------------------
+// Once cancel cleanup
+//------------------------------------------------------------------------------
+static void once_cleanup(void *arg)
+{
+  tbthread_once_t *once = (tbthread_once_t *)arg;
+  *once = TB_ONCE_NEW;
+  SYSCALL3(__NR_futex, once, FUTEX_WAKE, INT_MAX);
+}
+
+//------------------------------------------------------------------------------
 // Run the code once
 //------------------------------------------------------------------------------
 int tbthread_once(tbthread_once_t *once, void (*func)(void))
@@ -372,17 +382,40 @@ int tbthread_once(tbthread_once_t *once, void (*func)(void))
   if(!once || !func)
     return -EINVAL;
 
-  if(*once == TB_ONCE_DONE)
-    return 0;
+  int cancel_state;
 
-  if(__sync_bool_compare_and_swap(once, TB_ONCE_NEW, TB_ONCE_IN_PROGRESS)) {
-    (*func)();
-    *once = TB_ONCE_DONE;
-    SYSCALL3(__NR_futex, once, FUTEX_WAKE, INT_MAX);
-    return 0;
+  while(1) {
+    if(*once == TB_ONCE_DONE)
+      return 0;
+
+    //--------------------------------------------------------------------------
+    // The executor
+    //--------------------------------------------------------------------------
+    tbthread_setcancelstate(TBTHREAD_CANCEL_DISABLE, &cancel_state);
+    if(__sync_bool_compare_and_swap(once, TB_ONCE_NEW, TB_ONCE_IN_PROGRESS)) {
+      tbthread_cleanup_push(once_cleanup, once);
+      tbthread_setcancelstate(cancel_state, 0);
+
+      (*func)();
+
+      tbthread_setcancelstate(TBTHREAD_CANCEL_DISABLE, &cancel_state);
+      tbthread_cleanup_pop(0);
+
+      *once = TB_ONCE_DONE;
+      SYSCALL3(__NR_futex, once, FUTEX_WAKE, INT_MAX);
+      tbthread_setcancelstate(cancel_state, 0);
+      return 0;
+    }
+
+    tbthread_setcancelstate(cancel_state, 0);
+
+    //--------------------------------------------------------------------------
+    // The waiters
+    //--------------------------------------------------------------------------
+    while(1) {
+      SYSCALL3(__NR_futex, once, FUTEX_WAIT, TB_ONCE_IN_PROGRESS);
+      if(*once != TB_ONCE_IN_PROGRESS)
+        break;
+    }
   }
-
-  while(*once != TB_ONCE_DONE)
-    SYSCALL3(__NR_futex, once, FUTEX_WAIT, TB_ONCE_IN_PROGRESS);
-  return 0;
 }
