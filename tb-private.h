@@ -39,6 +39,10 @@
 
 #define SIGCANCEL SIGRTMIN
 
+#define TB_START_OK   0
+#define TB_START_WAIT 1
+#define TB_START_EXIT 2
+
 void tb_tls_call_destructors();
 void tb_cancel_handler(int sig, siginfo_t *si, void *ctx);
 void tb_call_cleanup_handlers();

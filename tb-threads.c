@@ -48,8 +48,10 @@ void tbthread_init()
   tbthread_t thread = malloc(sizeof(struct tbthread));
   memset(thread, 0, sizeof(struct tbthread));
   thread->self = thread;
+  thread->sched_policy = SCHED_NORMAL;
   SYSCALL2(__NR_arch_prctl, ARCH_SET_FS, thread);
   tb_pid = SYSCALL0(__NR_getpid);
+  thread->exit_futex = tb_pid;
 
   struct sigaction sa;
   memset(&sa, 0, sizeof(struct sigaction));
@@ -72,8 +74,10 @@ void tbthread_finit()
 //------------------------------------------------------------------------------
 void tbthread_attr_init(tbthread_attr_t *attr)
 {
+  memset(attr, 0, sizeof(tbthread_attr_t));
   attr->stack_size = 8192 * 1024;
   attr->joinable   = 1;
+  attr->sched_inherit = TBTHREAD_INHERIT_SCHED;
 }
 
 int tbthread_attr_setdetachstate(tbthread_attr_t *attr, int state)
@@ -90,6 +94,19 @@ int tbthread_attr_setdetachstate(tbthread_attr_t *attr, int state)
 static int start_thread(void *arg)
 {
   tbthread_t th = (tbthread_t)arg;
+
+  //----------------------------------------------------------------------------
+  // Wait until we can run the user function
+  //----------------------------------------------------------------------------
+  if(th->start_status != TB_START_OK) {
+    SYSCALL3(__NR_futex, &th->start_status, FUTEX_WAIT, TB_START_WAIT);
+    if(th->start_status == TB_START_EXIT)
+      SYSCALL1(__NR_exit, 0);
+  }
+
+  //----------------------------------------------------------------------------
+  // Run the user function
+  //----------------------------------------------------------------------------
   void *ret = th->fn(th->arg);
   tbthread_setcancelstate(TBTHREAD_CANCEL_DISABLE, 0);
   tb_clear_cleanup_handlers();
@@ -221,6 +238,9 @@ int tbthread_create(
   void                  *(*f)(void *),
   void                  *arg)
 {
+  int ret = 0;
+  *thread = 0;
+
   //----------------------------------------------------------------------------
   // Allocate the stack with a guard page at the end so that we could protect
   // from overflows (by receiving a SIGSEGV)
@@ -233,8 +253,8 @@ int tbthread_create(
 
   status = SYSCALL3(__NR_mprotect, stack, EXEC_PAGESIZE, PROT_NONE);
   if(status < 0) {
-    tbmunmap(stack, attr->stack_size);
-    return status;
+    ret = status;
+    goto error;
   }
 
   //----------------------------------------------------------------------------
@@ -251,6 +271,19 @@ int tbthread_create(
   (*thread)->cancel_status = TB_CANCEL_ENABLED | TB_CANCEL_DEFERRED;
 
   //----------------------------------------------------------------------------
+  // If we set a scheduling policy, we need to make sure that the thread goes to
+  // sleep immediately after it starts so that we can make sure that we can
+  // successfuly set the before the user function executes.
+  //----------------------------------------------------------------------------
+  if(!attr->sched_inherit)
+    (*thread)->start_status = TB_START_WAIT;
+  else {
+    tbthread_t self = tbthread_self();
+    (*thread)->sched_policy = self->sched_policy;
+    (*thread)->sched_priority = self->sched_priority;
+  }
+
+  //----------------------------------------------------------------------------
   // Spawn the thread
   //----------------------------------------------------------------------------
   int flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SYSVSEM | CLONE_SIGHAND;
@@ -260,9 +293,8 @@ int tbthread_create(
   int tid = tbclone(start_thread, *thread, flags, stack+attr->stack_size,
                     0, &(*thread)->exit_futex, *thread);
   if(tid < 0) {
-    tbmunmap(stack, attr->stack_size);
-    free(*thread);
-    return tid;
+    ret = tid;
+    goto error;
   }
 
   //----------------------------------------------------------------------------
@@ -271,7 +303,29 @@ int tbthread_create(
   //----------------------------------------------------------------------------
   (*thread)->exit_futex = tid;
 
+  //----------------------------------------------------------------------------
+  // Set scheduling policy. If we succeed, we let the thread run. If not, we
+  // wait for it to exit;
+  //----------------------------------------------------------------------------
+  if(!attr->sched_inherit) {
+    ret = tbthread_setschedparam(*thread, attr->sched_policy,
+      attr->sched_priority);
+
+    if(ret) (*thread)->start_status = TB_START_EXIT;
+    else (*thread)->start_status = TB_START_OK;
+    SYSCALL3(__NR_futex, &(*thread)->start_status, FUTEX_WAKE, 1);
+
+    if(ret) {
+      wait_for_thread(*thread);
+      goto error;
+    }
+  }
   return 0;
+
+error:
+  tbmunmap(stack, attr->stack_size);
+  release_descriptor(*thread);
+  return ret;
 }
 
 //------------------------------------------------------------------------------

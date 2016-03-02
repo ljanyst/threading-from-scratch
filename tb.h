@@ -25,6 +25,7 @@
 #include <stddef.h>
 #include <asm/signal.h>
 #include <asm-generic/siginfo.h>
+#include <linux/sched.h>
 
 //------------------------------------------------------------------------------
 // Constants
@@ -43,6 +44,9 @@
 
 #define TBTHREAD_CANCELED ((void*)-1)
 
+#define TBTHREAD_INHERIT_SCHED 1
+#define TBTHREAD_EXPLICIT_SCHED 0
+
 //------------------------------------------------------------------------------
 // List struct
 //------------------------------------------------------------------------------
@@ -59,6 +63,9 @@ typedef struct
 {
   uint32_t  stack_size;
   uint8_t   joinable;
+  uint8_t   sched_inherit;
+  uint8_t   sched_policy;
+  uint8_t   sched_priority;
 } tbthread_attr_t;
 
 //------------------------------------------------------------------------------
@@ -80,8 +87,11 @@ typedef struct tbthread
   } tls[TBTHREAD_MAX_KEYS];
   uint8_t join_status;
   uint8_t cancel_status;
+  uint8_t sched_policy;
+  uint8_t sched_priority;
   struct tbthread *joiner;
   list_t cleanup_handlers;
+  uint32_t start_status;
 } *tbthread_t;
 
 //------------------------------------------------------------------------------
@@ -157,6 +167,16 @@ int tbthread_mutex_destroy(tbthread_mutex_t *mutex);
 int tbthread_mutex_lock(tbthread_mutex_t *mutex);
 int tbthread_mutex_trylock(tbthread_mutex_t *mutex);
 int tbthread_mutex_unlock(tbthread_mutex_t *mutex);
+
+//------------------------------------------------------------------------------
+// Scheduling
+//------------------------------------------------------------------------------
+int tbthread_setschedparam(tbthread_t thread, int policy, int priority);
+int tbthread_getschedparam(tbthread_t thread, int *policy, int *priority);
+
+int tbthread_attr_setschedpolicy(tbthread_attr_t *attr, int policy);
+int tbthread_attr_setschedpriority(tbthread_attr_t *attr, int priority);
+int tbthread_attr_setinheritsched(tbthread_attr_t *attr, int inheritsched);
 
 //------------------------------------------------------------------------------
 // Utility functions
