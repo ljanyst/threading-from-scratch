@@ -112,10 +112,12 @@ void *thread_func_recursive(void *arg)
 //------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
+  tbthread_init();
+
   tbthread_t       thread[5];
   tbthread_attr_t  attr;
   void            *ret;
-  int              st;
+  int              st = 0;
 
   //----------------------------------------------------------------------------
   // Initialize the mutexes
@@ -140,8 +142,8 @@ int main(int argc, char **argv)
   for(int i = 0; i < 5; ++i) {
     st = tbthread_create(&thread[i], &attr, thread_func_normal, &mutex_normal);
     if(st != 0) {
-      tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
-      return 1;
+      tbprint("Failed to spawn thread %d: %s\n", i, tbstrerror(-st));
+      goto exit;
     }
     tbthread_detach(thread[i]);
   }
@@ -160,8 +162,8 @@ int main(int argc, char **argv)
   for(int i = 0; i < 2; ++i) {
     st = tbthread_create(&thread[i], &attr, errChkFunc[i], &mutex_errorcheck);
     if(st != 0) {
-      tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
-      return 1;
+      tbprint("Failed to spawn thread %d: %s\n", i, tbstrerror(-st));
+      goto exit;
     }
     tbthread_detach(thread[i]);
   }
@@ -180,8 +182,8 @@ int main(int argc, char **argv)
     st = tbthread_create(&thread[i], &attr, thread_func_recursive,
       &mutex_recursive);
     if(st != 0) {
-      tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
-      return 1;
+      tbprint("Failed to spawn thread %d: %s\n", i, tbstrerror(-st));
+      goto exit;
     }
     tbthread_detach(thread[i]);
   }
@@ -190,5 +192,7 @@ int main(int argc, char **argv)
   tbprint("[thread main] Sleeping 7 seconds\n");
   tbsleep(7);
 
-  return 0;
+exit:
+  tbthread_finit();
+  return st;
 };

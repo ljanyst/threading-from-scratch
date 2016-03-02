@@ -87,11 +87,13 @@ void *thread_func(void *arg)
 //------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
+  tbthread_init();
+
   tbthread_t       thread[5];
   int              targ[5];
   tbthread_attr_t  attr;
   void            *ret;
-  int              st;
+  int              st = 0;
 
   //----------------------------------------------------------------------------
   // Allocate the keys
@@ -114,7 +116,7 @@ int main(int argc, char **argv)
     st = tbthread_create(&thread[i], &attr, thread_func, &targ[i]);
     if(st != 0) {
       tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
-      return 1;
+      goto exit;
     }
     tbthread_detach(thread[i]);
   }
@@ -127,5 +129,7 @@ int main(int argc, char **argv)
   tbprint("[thread main] Sleeping 10 seconds\n");
   tbsleep(10);
 
-  return 0;
+exit:
+  tbthread_finit();
+  return st;
 };

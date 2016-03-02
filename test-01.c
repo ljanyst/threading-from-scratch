@@ -40,18 +40,19 @@ void *thread_func(void *arg)
 //------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
+  tbthread_init();
   tbthread_t       thread[5];
   int              targ[5];
   tbthread_attr_t  attr;
   void            *ret;
-  int              st;
+  int              st = 0;
   tbthread_attr_init(&attr);
   for(int i = 0; i < 5; ++i) {
     targ[i] = i;
     st = tbthread_create(&thread[i], &attr, thread_func, &targ[i]);
     if(st != 0) {
       tbprint("Failed to spawn thread %d: %s\n", i, strerror(-st));
-      return 1;
+      goto exit;
     }
     tbthread_detach(thread[i]);
   }
@@ -60,5 +61,7 @@ int main(int argc, char **argv)
 
   tbsleep(10);
 
-  return 0;
+exit:
+  tbthread_finit();
+  return st;
 };
