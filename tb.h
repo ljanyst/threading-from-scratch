@@ -87,8 +87,7 @@ typedef struct tbthread
   } tls[TBTHREAD_MAX_KEYS];
   uint8_t join_status;
   uint8_t cancel_status;
-  uint8_t sched_policy;
-  uint8_t sched_priority;
+  uint16_t sched_info;
   struct tbthread *joiner;
   list_t cleanup_handlers;
   uint32_t start_status;

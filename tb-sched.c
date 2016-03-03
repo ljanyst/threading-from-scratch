@@ -21,13 +21,25 @@
 #include "tb-private.h"
 
 //------------------------------------------------------------------------------
-// Set scheduling parameters
+// Set scheduler
 //------------------------------------------------------------------------------
 struct tb_sched_param
 {
   int sched_priority;
 };
 
+int tb_set_sched(tbthread_t thread, int policy, int priority)
+{
+  struct tb_sched_param p; p.sched_priority = priority;
+  int ret = SYSCALL3(__NR_sched_setscheduler, thread->exit_futex, policy, &p);
+  if(!ret)
+    thread->sched_info = SCHED_INFO_PACK(policy, priority);
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// Set scheduling parameters
+//------------------------------------------------------------------------------
 int tbthread_setschedparam(tbthread_t thread, int policy, int priority)
 {
   if(policy != SCHED_NORMAL && policy != SCHED_FIFO && policy != SCHED_RR)
@@ -44,12 +56,7 @@ int tbthread_setschedparam(tbthread_t thread, int policy, int priority)
     goto exit;
   }
 
-  struct tb_sched_param p; p.sched_priority = priority;
-  ret = SYSCALL3(__NR_sched_setscheduler, thread->exit_futex, policy, &p);
-  if(!ret) {
-    thread->sched_policy = policy;
-    thread->sched_priority = priority;
-  }
+  ret = tb_set_sched(thread, policy, priority);
 
 exit:
   tbthread_mutex_unlock(&desc_mutex);
@@ -69,8 +76,9 @@ int tbthread_getschedparam(tbthread_t thread, int *policy, int *priority)
     goto exit;
   }
 
-  *policy = thread->sched_policy;
-  *priority = thread->sched_priority;
+  uint16_t si = thread->sched_info;
+  *policy = SCHED_INFO_POLICY(si);
+  *priority = SCHED_INFO_PRIORITY(si);
 
 exit:
   tbthread_mutex_unlock(&desc_mutex);

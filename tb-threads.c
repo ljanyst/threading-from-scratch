@@ -48,7 +48,7 @@ void tbthread_init()
   tbthread_t thread = malloc(sizeof(struct tbthread));
   memset(thread, 0, sizeof(struct tbthread));
   thread->self = thread;
-  thread->sched_policy = SCHED_NORMAL;
+  thread->sched_info = SCHED_INFO_PACK(SCHED_NORMAL, 0);
   SYSCALL2(__NR_arch_prctl, ARCH_SET_FS, thread);
   tb_pid = SYSCALL0(__NR_getpid);
   thread->exit_futex = tb_pid;
@@ -279,8 +279,7 @@ int tbthread_create(
     (*thread)->start_status = TB_START_WAIT;
   else {
     tbthread_t self = tbthread_self();
-    (*thread)->sched_policy = self->sched_policy;
-    (*thread)->sched_priority = self->sched_priority;
+    (*thread)->sched_info = self->sched_info;
   }
 
   //----------------------------------------------------------------------------
@@ -308,8 +307,7 @@ int tbthread_create(
   // wait for it to exit;
   //----------------------------------------------------------------------------
   if(!attr->sched_inherit) {
-    ret = tbthread_setschedparam(*thread, attr->sched_policy,
-      attr->sched_priority);
+    ret = tb_set_sched(*thread, attr->sched_policy, attr->sched_priority);
 
     if(ret) (*thread)->start_status = TB_START_EXIT;
     else (*thread)->start_status = TB_START_OK;

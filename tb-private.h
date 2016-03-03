@@ -43,10 +43,16 @@
 #define TB_START_WAIT 1
 #define TB_START_EXIT 2
 
+#define SCHED_INFO_PACK(policy, priority) (((uint16_t)policy << 8) | priority)
+#define SCHED_INFO_POLICY(info) (info >> 8)
+#define SCHED_INFO_PRIORITY(info) (info & 0x00ff)
+
 void tb_tls_call_destructors();
 void tb_cancel_handler(int sig, siginfo_t *si, void *ctx);
 void tb_call_cleanup_handlers();
 void tb_clear_cleanup_handlers();
+
+int tb_set_sched(tbthread_t thread, int policy, int priority);
 
 void tb_futex_lock(int *futex);
 int tb_futex_trylock(int *futex);
