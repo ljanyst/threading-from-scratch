@@ -22,28 +22,47 @@
 #include <linux/futex.h>
 
 //------------------------------------------------------------------------------
-// Normal mutex
+// Low level locking
 //------------------------------------------------------------------------------
-static int lock_normal(tbthread_mutex_t *mutex)
+void tb_futex_lock(int *futex)
 {
   while(1) {
-    if(__sync_bool_compare_and_swap(&mutex->futex, 0, 1))
-      return 0;
-    SYSCALL3(__NR_futex, &mutex->futex, FUTEX_WAIT, 1);
+    if(__sync_bool_compare_and_swap(futex, 0, 1))
+      return;
+    SYSCALL3(__NR_futex, futex, FUTEX_WAIT, 1);
   }
 }
 
-static int trylock_normal(tbthread_mutex_t *mutex)
+int tb_futex_trylock(int *futex)
 {
-  if(__sync_bool_compare_and_swap(&mutex->futex, 0, 1))
+  if(__sync_bool_compare_and_swap(futex, 0, 1))
       return 0;
   return -EBUSY;
 }
 
+void tb_futex_unlock(int *futex)
+{
+  if(__sync_bool_compare_and_swap(futex, 1, 0))
+    SYSCALL3(__NR_futex, futex, FUTEX_WAKE, 1);
+}
+
+//------------------------------------------------------------------------------
+// Normal mutex
+//------------------------------------------------------------------------------
+static int lock_normal(tbthread_mutex_t *mutex)
+{
+  tb_futex_lock(&mutex->futex);
+  return 0;
+}
+
+static int trylock_normal(tbthread_mutex_t *mutex)
+{
+  return tb_futex_trylock(&mutex->futex);
+}
+
 static int unlock_normal(tbthread_mutex_t *mutex)
 {
-  if(__sync_bool_compare_and_swap(&mutex->futex, 1, 0))
-    SYSCALL3(__NR_futex, &mutex->futex, FUTEX_WAKE, 1);
+  tb_futex_unlock(&mutex->futex);
   return 0;
 }
 

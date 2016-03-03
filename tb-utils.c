@@ -18,32 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "tb.h"
+#include "tb-private.h"
 
 #include <linux/time.h>
-#include <linux/futex.h>
 #include <asm-generic/param.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdint.h>
-
-//------------------------------------------------------------------------------
-// A futex for serializing the writes
-//------------------------------------------------------------------------------
-static void futex_lock(int *futex)
-{
-  while(1) {
-    int val = *futex;
-    if(val == 0 && __sync_bool_compare_and_swap(futex, val, 1))
-      return;
-    SYSCALL3(__NR_futex, futex, FUTEX_WAIT, 1);
-  }
-}
-
-static void futex_unlock(int *futex)
-{
-  __sync_bool_compare_and_swap(futex, 1, 0);
-  SYSCALL3(__NR_futex, futex, FUTEX_WAKE, 1);
-}
 
 //------------------------------------------------------------------------------
 // Print unsigned int to a string
@@ -99,7 +80,7 @@ static void printNumS(int64_t num)
 static int print_lock;
 void tbprint(const char *format, ...)
 {
-  futex_lock(&print_lock);
+  tb_futex_lock(&print_lock);
   va_list ap;
   int length = 0;
   int sz     = 0;
@@ -164,7 +145,7 @@ void tbprint(const char *format, ...)
   if(length)
     tbwrite(1, start, length);
   va_end (ap);
-  futex_unlock(&print_lock);
+  tb_futex_unlock(&print_lock);
 }
 
 //------------------------------------------------------------------------------
@@ -251,7 +232,7 @@ static void       *heap_limit;
 static int memory_lock;
 void *malloc(size_t size)
 {
-  futex_lock(&memory_lock);
+  tb_futex_lock(&memory_lock);
 
   //----------------------------------------------------------------------------
   // Allocating anything less than 16 bytes is kind of pointless, the
@@ -298,7 +279,7 @@ void *malloc(size_t size)
 
     if(heap_limit == new_heap_limit)
     {
-      futex_unlock(&memory_lock);
+      tb_futex_unlock(&memory_lock);
       return 0;
     }
 
@@ -326,7 +307,7 @@ void *malloc(size_t size)
   // Mark the chunk as used and return the memory
   //----------------------------------------------------------------------------
   chunk->size |= MEMCHUNK_USED;
-  futex_unlock(&memory_lock);
+  tb_futex_unlock(&memory_lock);
   return (char*)chunk+sizeof(memchunk_t);
 }
 
@@ -338,10 +319,10 @@ void free(void *ptr)
   if(!ptr)
     return;
 
-  futex_lock(&memory_lock);
+  tb_futex_lock(&memory_lock);
   memchunk_t *chunk = (memchunk_t *)((char *)ptr-sizeof(memchunk_t));
   chunk->size &= ~MEMCHUNK_USED;
-  futex_unlock(&memory_lock);
+  tb_futex_unlock(&memory_lock);
 }
 
 //------------------------------------------------------------------------------

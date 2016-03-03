@@ -48,6 +48,10 @@ void tb_cancel_handler(int sig, siginfo_t *si, void *ctx);
 void tb_call_cleanup_handlers();
 void tb_clear_cleanup_handlers();
 
+void tb_futex_lock(int *futex);
+int tb_futex_trylock(int *futex);
+void tb_futex_unlock(int *futex);
+
 extern tbthread_mutex_t desc_mutex;
 extern list_t used_desc;
 extern int tb_pid;
