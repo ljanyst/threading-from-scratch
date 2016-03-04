@@ -440,6 +440,18 @@ list_t *list_find_elem(list_t *list, void *element)
 }
 
 //------------------------------------------------------------------------------
+// Find an element using comparator fucntion
+//------------------------------------------------------------------------------
+list_t *list_find_elem_func(list_t *list, void *element,
+  int (*func)(void*, void*))
+{
+  list_t *cursor = list;
+  for(; cursor->next && !(*func)(element, cursor->next->element);
+        cursor = cursor->next);
+  return cursor->next;
+}
+
+//------------------------------------------------------------------------------
 // Invoke a function for each element
 //------------------------------------------------------------------------------
 void list_for_each_elem(list_t *list, void (*func)(void *))
