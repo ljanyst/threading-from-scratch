@@ -404,6 +404,21 @@ void list_add(list_t *list, list_t *node, int front)
 }
 
 //------------------------------------------------------------------------------
+// Add a node here
+//------------------------------------------------------------------------------
+void list_add_here(list_t *list, list_t *node, int (*here)(void*, void*))
+{
+  list_t *cursor = list;
+  for(; cursor->next && !(*here)(node->element, cursor->next->element);
+        cursor = cursor->next);
+  node->next = cursor->next;
+  cursor->next = node;
+  node->prev = cursor;
+  if(node->next)
+    node->next->prev = node;
+}
+
+//------------------------------------------------------------------------------
 // Remove a node
 //------------------------------------------------------------------------------
 void list_rm(list_t *node)

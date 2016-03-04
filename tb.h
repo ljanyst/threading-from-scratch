@@ -248,6 +248,7 @@ int tbsigaction(int signum, struct sigaction *act, struct sigaction *old);
 //------------------------------------------------------------------------------
 int list_add_elem(list_t *list, void *element, int front);
 void list_add(list_t *list, list_t *node, int front);
+void list_add_here(list_t *list, list_t *node, int (*here)(void*, void*));
 void list_rm(list_t *node);
 list_t *list_find_elem(list_t *list, void *element);
 void list_for_each_elem(list_t *list, void (*func)(void *));
