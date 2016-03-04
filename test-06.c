@@ -74,7 +74,7 @@ int main(int argc, char **argv)
   //----------------------------------------------------------------------------
   for(int i = 0; i < 5; ++i) {
     tbprint("[thread main] Sending SIGUSR1 to thread #%d\n", i);
-    SYSCALL3(__NR_tgkill, tb_pid, thread[i]->exit_futex, SIGUSR1);
+    SYSCALL3(__NR_tgkill, tb_pid, thread[i]->tid, SIGUSR1);
   }
 
   //----------------------------------------------------------------------------

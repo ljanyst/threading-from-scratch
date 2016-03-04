@@ -33,7 +33,7 @@ struct tb_sched_param
 int tb_set_sched(tbthread_t thread, int policy, int priority)
 {
   struct tb_sched_param p; p.sched_priority = priority;
-  int ret = SYSCALL3(__NR_sched_setscheduler, thread->exit_futex, policy, &p);
+  int ret = SYSCALL3(__NR_sched_setscheduler, thread->tid, policy, &p);
   if(!ret)
     thread->sched_info = SCHED_INFO_PACK(policy, priority);
   return ret;

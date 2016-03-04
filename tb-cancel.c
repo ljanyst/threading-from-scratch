@@ -59,7 +59,7 @@ int tbthread_cancel(tbthread_t thread)
       break;
   }
   if((val & TB_CANCEL_ENABLED) && !(val & TB_CANCEL_DEFERRED))
-    SYSCALL3(__NR_tgkill, tb_pid, thread->exit_futex, SIGCANCEL);
+    SYSCALL3(__NR_tgkill, tb_pid, thread->tid, SIGCANCEL);
 
 exit:
   tbthread_mutex_unlock(&desc_mutex);

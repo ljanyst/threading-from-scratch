@@ -51,7 +51,7 @@ void tbthread_init()
   thread->sched_info = SCHED_INFO_PACK(SCHED_NORMAL, 0);
   SYSCALL2(__NR_arch_prctl, ARCH_SET_FS, thread);
   tb_pid = SYSCALL0(__NR_getpid);
-  thread->exit_futex = tb_pid;
+  thread->tid = tb_pid;
 
   struct sigaction sa;
   memset(&sa, 0, sizeof(struct sigaction));
@@ -158,11 +158,11 @@ void tbthread_exit(void *retval)
 //------------------------------------------------------------------------------
 static void wait_for_thread(tbthread_t thread)
 {
-  uint32_t tid = thread->exit_futex;
+  uint32_t tid = thread->tid;
   long ret = 0;
   if(tid != 0)
     do {
-      ret = SYSCALL3(__NR_futex, &thread->exit_futex, FUTEX_WAIT, tid);
+      ret = SYSCALL3(__NR_futex, &thread->tid, FUTEX_WAIT, tid);
     } while(ret != -EWOULDBLOCK && ret != 0);
 }
 
@@ -290,7 +290,7 @@ int tbthread_create(
   flags |= CLONE_CHILD_SETTID | CLONE_CHILD_CLEARTID;
 
   int tid = tbclone(start_thread, *thread, flags, stack+attr->stack_size,
-                    0, &(*thread)->exit_futex, *thread);
+                    0, &(*thread)->tid, *thread);
   if(tid < 0) {
     ret = tid;
     goto error;
@@ -300,7 +300,7 @@ int tbthread_create(
   // It may happen that we will start to wait for this futex before the kernel
   // manages to fill it with something meaningful.
   //----------------------------------------------------------------------------
-  (*thread)->exit_futex = tid;
+  (*thread)->tid = tid;
 
   //----------------------------------------------------------------------------
   // Set scheduling policy. If we succeed, we let the thread run. If not, we

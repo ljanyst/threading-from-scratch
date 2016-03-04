@@ -80,7 +80,7 @@ typedef struct tbthread
   struct tbthread *self;
   void *stack;
   uint32_t stack_size;
-  uint32_t exit_futex;
+  uint32_t tid;
   void *(*fn)(void *);
   void *arg;
   void *retval;
