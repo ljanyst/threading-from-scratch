@@ -23,7 +23,7 @@ macro(add_test name)
   target_link_libraries(${name} tb)
 endmacro()
 
-foreach(i RANGE 9)
+foreach(i RANGE 10)
   if(i LESS 10)
     add_test(test-0${i})
   else()
