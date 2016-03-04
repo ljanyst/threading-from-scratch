@@ -47,6 +47,10 @@
 #define TBTHREAD_INHERIT_SCHED 1
 #define TBTHREAD_EXPLICIT_SCHED 0
 
+#define TBTHREAD_PRIO_NONE 3
+#define TBTHREAD_PRIO_INHERIT 4
+#define TBTHREAD_PRIO_PROTECT 5
+
 //------------------------------------------------------------------------------
 // List struct
 //------------------------------------------------------------------------------
@@ -88,9 +92,13 @@ typedef struct tbthread
   uint8_t join_status;
   uint8_t cancel_status;
   uint16_t sched_info;
+  uint16_t user_sched_info;
   struct tbthread *joiner;
   list_t cleanup_handlers;
+  list_t protect_mutexes;
+  list_t inherit_mutexes;
   uint32_t start_status;
+  uint32_t lock;
 } *tbthread_t;
 
 //------------------------------------------------------------------------------
@@ -99,6 +107,8 @@ typedef struct tbthread
 typedef struct
 {
   uint8_t type;
+  uint8_t protocol;
+  uint8_t prioceiling;
 } tbthread_mutexattr_t;
 
 //------------------------------------------------------------------------------
@@ -108,11 +118,14 @@ typedef struct
 {
   int        futex;
   uint8_t    type;
+  uint8_t    protocol;
+  uint16_t   sched_info;
   tbthread_t owner;
   uint64_t   counter;
+  uint32_t   internal_futex;
 } tbthread_mutex_t;
 
-#define TBTHREAD_MUTEX_INITIALIZER {0, 0, 0, 0}
+#define TBTHREAD_MUTEX_INITIALIZER {0, 0, TBTHREAD_PRIO_NONE, 0, 0, 0, 0}
 
 //------------------------------------------------------------------------------
 // Once
@@ -176,6 +189,13 @@ int tbthread_getschedparam(tbthread_t thread, int *policy, int *priority);
 int tbthread_attr_setschedpolicy(tbthread_attr_t *attr, int policy);
 int tbthread_attr_setschedpriority(tbthread_attr_t *attr, int priority);
 int tbthread_attr_setinheritsched(tbthread_attr_t *attr, int inheritsched);
+
+int tbthread_mutexattr_setprioceiling(tbthread_mutexattr_t *attr, int ceiling);
+int tbthread_mutexattr_setprotocol(tbthread_mutexattr_t *attr, int protocol);
+
+int tbthread_mutex_getprioceiling(const tbthread_mutex_t *mutex, int *ceiling);
+int tbthread_mutex_setprioceiling(tbthread_mutex_t *mutex, int ceiling,
+  int *old_ceiling);
 
 //------------------------------------------------------------------------------
 // Utility functions

@@ -53,6 +53,13 @@ void tb_call_cleanup_handlers();
 void tb_clear_cleanup_handlers();
 
 int tb_set_sched(tbthread_t thread, int policy, int priority);
+int tb_compute_sched(tbthread_t thread);
+
+void tb_protect_mutex_sched(tbthread_mutex_t *mutex);
+void tb_protect_mutex_unsched(tbthread_mutex_t *mutex);
+void tb_inherit_mutex_add(tbthread_mutex_t *mutex);
+void tb_inherit_mutex_unsched(tbthread_mutex_t *mutex);
+void tb_inherit_mutex_sched(tbthread_mutex_t *mutex, tbthread_t thread);
 
 void tb_futex_lock(int *futex);
 int tb_futex_trylock(int *futex);
