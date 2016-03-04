@@ -48,7 +48,7 @@ static void printNum(uint64_t num, int base)
     --cursor;
   }
   ++cursor;
-  tbwrite(1, cursor, 32-(cursor-str));
+  tbwrite(1, cursor, 31-(cursor-str));
 }
 
 //------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ static void printNumS(int64_t num)
     --cursor;
   }
   ++cursor;
-  tbwrite(1, cursor, 32-(cursor-str));
+  tbwrite(1, cursor, 31-(cursor-str));
 }
 
 //------------------------------------------------------------------------------
