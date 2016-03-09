@@ -15,6 +15,7 @@ add_library(
   tb-mutexes.c
   tb-cancel.c
   tb-sched.c
+  tb-rwlock.c
   tb-clone.S
   tb-signal-trampoline.S)
 

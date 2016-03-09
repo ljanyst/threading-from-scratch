@@ -135,6 +135,20 @@ typedef int tbthread_once_t;
 #define TBTHREAD_ONCE_INIT 0
 
 //------------------------------------------------------------------------------
+// RW lock
+//------------------------------------------------------------------------------
+typedef struct {
+  int lock;
+  int writers_queued;
+  int rd_futex;
+  int wr_futex;
+  tbthread_t writer;
+  int readers;
+} tbthread_rwlock_t;
+
+#define TBTHREAD_RWLOCK_INIT {0, 0, 0, 0, 0, 0}
+
+//------------------------------------------------------------------------------
 // General threading
 //------------------------------------------------------------------------------
 void tbthread_init();
@@ -196,6 +210,19 @@ int tbthread_mutexattr_setprotocol(tbthread_mutexattr_t *attr, int protocol);
 int tbthread_mutex_getprioceiling(const tbthread_mutex_t *mutex, int *ceiling);
 int tbthread_mutex_setprioceiling(tbthread_mutex_t *mutex, int ceiling,
   int *old_ceiling);
+
+//------------------------------------------------------------------------------
+// RW Lock
+//-----------------------------------------------------------------------------
+int tbthread_rwlock_init(tbthread_rwlock_t *rwlock);
+int tbthread_rwlock_destroy(tbthread_rwlock_t *rwlock);
+
+int tbthread_rwlock_rdlock(tbthread_rwlock_t *rwlock);
+int tbthread_rwlock_wrlock(tbthread_rwlock_t *rwlock);
+int tbthread_rwlock_unlock(tbthread_rwlock_t *rwlock);
+
+int tbthread_rwlock_tryrdlock(tbthread_rwlock_t *rwlock);
+int tbthread_rwlock_trywrlock(tbthread_rwlock_t *rwlock);
 
 //------------------------------------------------------------------------------
 // Utility functions
