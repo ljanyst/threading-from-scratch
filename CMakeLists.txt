@@ -16,6 +16,7 @@ add_library(
   tb-cancel.c
   tb-sched.c
   tb-rwlock.c
+  tb-condvar.c
   tb-clone.S
   tb-signal-trampoline.S)
 

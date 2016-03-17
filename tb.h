@@ -149,6 +149,20 @@ typedef struct {
 #define TBTHREAD_RWLOCK_INIT {0, 0, 0, 0, 0, 0}
 
 //------------------------------------------------------------------------------
+// Condvar
+//------------------------------------------------------------------------------
+typedef struct {
+  int lock;
+  int futex;
+  uint64_t waiters;
+  uint64_t signal_num;
+  uint64_t broadcast_seq;
+  tbthread_mutex_t *mutex;
+} tbthread_cond_t;
+
+#define TBTHREAD_COND_INITIALIZER {0, 0, 0, 0, 0, 0}
+
+//------------------------------------------------------------------------------
 // General threading
 //------------------------------------------------------------------------------
 void tbthread_init();
@@ -223,6 +237,13 @@ int tbthread_rwlock_unlock(tbthread_rwlock_t *rwlock);
 
 int tbthread_rwlock_tryrdlock(tbthread_rwlock_t *rwlock);
 int tbthread_rwlock_trywrlock(tbthread_rwlock_t *rwlock);
+
+//------------------------------------------------------------------------------
+// Condvar
+//------------------------------------------------------------------------------
+int tbthread_cond_broadcast(tbthread_cond_t *cond);
+int tbthread_cond_signal(tbthread_cond_t *cond);
+int tbthread_cond_wait(tbthread_cond_t *cond, tbthread_mutex_t *mutex);
 
 //------------------------------------------------------------------------------
 // Utility functions
