@@ -48,6 +48,8 @@ int main(int argc, char **argv)
   void     *addrs[256];
   uint32_t  sizes[256];
 
+  tbprint("Testing memory allocator. It may take a while...\n");
+
   //----------------------------------------------------------------------------
   // Allocate all the chunks
   //----------------------------------------------------------------------------

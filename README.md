@@ -1,17 +1,16 @@
 Threading From Scratch
 ======================
 
-What is the best way to understand something well? For me, it's always been
-trying to build something similar from scratch. This project is my attempt to
-learn what it takes to implement *pthreads* on x86_64 Linux. I hope you can
-benefit from it too. Some parts of it are based on ideas found in *glibc*.
+This project is my attempt to to implement *pthreads*-like threading library on
+x86_64 Linux for purely educational purposes. Some parts of it are based on
+ideas found in *glibc*.
 
 **Your feedback is very welcome. Drop me a line at lukasz@jany.st if you have
-any comments.** I am particularly interested in someone reviewing the
-synchronisation routines. Some cancelation points are missing, but it's
-deliberate. Things are not particularly efficient. I favored clarity and
-conciseness over performance. For the same reason, much of error checking has
-been omitted as well.
+any comments.** It would be cool if someone could review the synchronisation
+routines. Some cancelation points are missing, but it's deliberate. Things are
+not particularly efficient because I favored clarity and conciseness over
+performance. For the same reason, much of error checking has been omitted as
+well.
 
 #### Utilities ####
 
