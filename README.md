@@ -7,12 +7,11 @@ learn what it takes to implement *pthreads* on x86_64 Linux. I hope you can
 benefit from it too. Some parts of it are based on ideas found in *glibc*.
 
 **Your feedback is very welcome. Drop me a line at lukasz@jany.st if you have
-any comments.** I am particularly
-interested in someone reviewing the synchronisation routines. Don't tell me
-about the cancellation points, though. I know many are missing. It's deliberate.
-I also know that some things are not particularly efficient. I favored clarity
-and conciseness, not speed. For the same reason, much of error checking has been
-omitted as well.
+any comments.** I am particularly interested in someone reviewing the
+synchronisation routines. Some cancelation points are missing, but it's
+deliberate. Things are not particularly efficient. I favored clarity and
+conciseness over performance. For the same reason, much of error checking has
+been omitted as well.
 
 #### Utilities ####
 
